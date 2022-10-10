@@ -1,22 +1,39 @@
 import { useEffect, useState } from "react";
 import { reqRespApi } from "../api/reqRes";
-import { ReqRespUsuarioListado } from "../interfaces/reqResp";
-import { Usuario } from "../interfaces/reqResp";
+import { ReqRespUsuarioListado, Usuario } from "../interfaces/reqResp";
+import { useRef } from "react";
+//import { Usuario } from "../interfaces/reqResp";
+//import { useUsuarios } from "./hooks/useUsuarios";
 
 export const Usuarios = () => {
-    const [ usuarios, setUsuarios ] = useState<Usuario[]>([]);
+    
+    //const { usuarios, ficFnPaginaAnterior, ficFnPaginaSiguiente } = useUsuarios();
+    const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+    const ficRefPage = useRef(0);
 
     useEffect(() => {
-    reqRespApi.get<ReqRespUsuarioListado>('/users')
-    .then(resp=> {
-        //console.log(resp);
-        //console.log(resp.data);
-        //console.log(resp.data.data);
-        //console.log(resp.data.data[0].first_name);
-        setUsuarios(resp.data.data);
-    })
-    .catch(err => console.log(err))
-    }, [])
+        ficFnCargaUsuarios();
+    }, []);
+
+    const ficFnCargaUsuarios = async () => {
+        
+        const ficResponse = await
+        reqRespApi.get<ReqRespUsuarioListado>('/users', {
+            params: {
+                page: ficRefPage.current
+            }
+        })
+        .then(resp=> {
+            if (resp.data.data.length > 0) {
+                setUsuarios(resp.data.data);
+                ficRefPage.current ++;
+            }
+            else {
+                alert('No hay más registros');
+            }
+        })
+        .catch(err => console.log(err))
+    }
 
     const renderItem = (usuario: Usuario) => {
         return (
@@ -65,6 +82,21 @@ export const Usuarios = () => {
                 }
                 </tbody>
             </table>
+            <button
+                className="btn btn-primary"
+                //onClick = { ficFnCargaUsuarios }
+                //onClick = { ficFnPaginaAnterior }
+            >
+            Anterior       
+            </button>
+            &nbsp;           
+            <button
+                className="btn btn-primary"
+                onClick= { ficFnCargaUsuarios }
+                //onClick = { ficFnPaginaSiguiente }
+                >
+                Siguiente       
+            </button>
         </>
     )
 }
